@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 dotenv.config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = process.env.MONGODB_URI;
 
 const app = express()
@@ -34,6 +34,14 @@ const run = async () => {
         app.get('/ideas', async (req, res) => {
             const result = await ideasCollection.find().toArray();
             res.send(result);
+        })
+
+        app.get('/ideaDetails/:id', async(req, res)=>{
+            const id = req.params.id;
+            const result = await ideasCollection.findOne({_id: new ObjectId(id)});
+            console.log('result:',result);
+            res.send(result);
+
         })
 
         await client.db("admin").command({ ping: 1 });
