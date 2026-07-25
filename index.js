@@ -29,8 +29,9 @@ const run = async () => {
 
         const db = client.db('SparkNest');
         const ideasCollection = db.collection('ideas');
+        const commentCollection = db.collection('comments');
 
-        // API
+        // ideas
         app.get('/ideas', async (req, res) => {
             const result = await ideasCollection.find().toArray();
             res.send(result);
@@ -44,9 +45,27 @@ const run = async () => {
         })
 
         app.post('/ideas', async(req, res) =>{
-            const newIdea = req.body;
-            console.log('newIdea:', newIdea);
+            const newIdea = {
+                ...req.body,
+                createdAt: new Date()
+            };
             const result = await ideasCollection.insertOne(newIdea);
+            console.log("after post:",result);
+            res.send(result);
+        })
+
+        // comments
+        app.get("/comments", async(req, res)=>{
+            const result = await commentCollection.find().toArray();
+            res.send(result);
+        });
+
+        app.post('/comments/', async(req, res)=>{
+            const newComment = {
+                ...req.body,
+                createdAt: new Date(),
+            }
+            const result = await commentCollection.insertOne(newComment);
             res.send(result);
         })
 
