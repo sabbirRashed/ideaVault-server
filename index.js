@@ -39,9 +39,15 @@ const run = async () => {
         app.get('/ideaDetails/:id', async(req, res)=>{
             const id = req.params.id;
             const result = await ideasCollection.findOne({_id: new ObjectId(id)});
-            console.log('result:',result);
             res.send(result);
 
+        })
+
+        app.post('/ideas', async(req, res) =>{
+            const newIdea = req.body;
+            console.log('newIdea:', newIdea);
+            const result = await ideasCollection.insertOne(newIdea);
+            res.send(result);
         })
 
         await client.db("admin").command({ ping: 1 });
