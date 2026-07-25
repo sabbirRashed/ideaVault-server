@@ -60,6 +60,12 @@ const run = async () => {
             res.send(result);
         });
 
+        app.get("/comments/:userId", async(req, res)=>{
+            const userId = req.params.userId;
+            const result =await commentCollection({userId}).toArray();
+            res.send(result);
+        })
+
         app.post('/comments/', async(req, res)=>{
             const newComment = {
                 ...req.body,
@@ -81,6 +87,12 @@ const run = async () => {
             const result = await commentCollection.updateOne(filter, modifiedComment);
             res.send(result);
         });
+
+        app.delete('/comments/:id', async(req, res)=>{
+            const id = req.params.id;
+            const result = await commentCollection.deleteOne({_id: new ObjectId(id)});
+            res.send(result);
+        })
 
 
         await client.db("admin").command({ ping: 1 });
