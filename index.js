@@ -46,8 +46,9 @@ const run = async () => {
 
         app.get('/ideas/:userId', async(req, res)=>{
             const userId = req.params.userId;
+            console.log("userId:", userId);
             const result = await ideasCollection.find({creatorId: userId}).toArray();
-            return result;
+            res.send(result);
         })
 
         app.post('/ideas', async(req, res) =>{
@@ -56,6 +57,18 @@ const run = async () => {
                 createdAt: new Date()
             };
             const result = await ideasCollection.insertOne(newIdea);
+            res.send(result);
+        })
+
+        app.patch('/idea/:ideaId', async(req, res)=>{
+            const ideaId = await req.params.ideaId;
+            const filter = {
+                _id: new ObjectId(ideaId)
+            };
+            const modifiedIdea = {
+                $set: req.body
+            }
+            const result = await ideasCollection.updateOne(filter, modifiedIdea);
             res.send(result);
         })
 
