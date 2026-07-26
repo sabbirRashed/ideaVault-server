@@ -42,6 +42,12 @@ const run = async () => {
             const result = await ideasCollection.findOne({_id: new ObjectId(id)});
             res.send(result);
 
+        });
+
+        app.get('/ideas/:userId', async(req, res)=>{
+            const userId = req.params.userId;
+            const result = await ideasCollection.find({creatorId: userId}).toArray();
+            return result;
         })
 
         app.post('/ideas', async(req, res) =>{
@@ -50,13 +56,13 @@ const run = async () => {
                 createdAt: new Date()
             };
             const result = await ideasCollection.insertOne(newIdea);
-            console.log("after post:",result);
             res.send(result);
         })
 
         // comments
-        app.get("/comments", async(req, res)=>{
-            const result = await commentCollection.find().toArray();
+        app.get("/comments/:ideaId", async(req, res)=>{
+            const id = req.params.ideaId;
+            const result = await commentCollection.find({ideaId:id}).toArray();
             res.send(result);
         });
 
@@ -66,7 +72,7 @@ const run = async () => {
             res.send(result);
         })
 
-        app.post('/comments/', async(req, res)=>{
+        app.post('/comments', async(req, res)=>{
             const newComment = {
                 ...req.body,
                 createdAt: new Date(),
