@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 dotenv.config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 const uri = process.env.MONGODB_URI;
 
 const app = express()
@@ -21,10 +22,33 @@ const client = new MongoClient(uri, {
     }
 });
 
+const JWKS = createRemoteJWKSet(
+    new URL('http://localhost:3000/api/auth/jwks')
+)
+
+const varifyToken = async (req, res, next) => {
+    const authHeader = req?.headers?.authorization;
+
+    if (!authHeader) {
+        return res.status(401).send({ message: 'Unauthorized' })
+    }
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+        return res.status(401).send({ message: 'Unauthorized' });
+    }
+
+    try {
+        const { payload } = await jwtVerify(token, JWKS,)
+        next()
+    }
+    catch (error) {
+        return res.status(403).send({ message: "Forbidden" })
+    }
+
+}
 
 const run = async () => {
     try {
-
         await client.connect();
 
         const db = client.db('SparkNest');
@@ -37,20 +61,19 @@ const run = async () => {
             res.send(result);
         })
 
-        app.get('/ideaDetails/:id', async(req, res)=>{
+        app.get('/ideaDetails/:id', varifyToken, async (req, res) => {
             const id = req.params.id;
-            const result = await ideasCollection.findOne({_id: new ObjectId(id)});
+            const result = await ideasCollection.findOne({ _id: new ObjectId(id) });
             res.send(result);
-
         });
 
-        app.get('/ideas/:userId', async(req, res)=>{
+        app.get('/ideas/:userId', varifyToken, async (req, res) => {
             const userId = req.params.userId;
-            const result = await ideasCollection.find({creatorId: userId}).toArray();
+            const result = await ideasCollection.find({ creatorId: userId }).toArray();
             res.send(result);
         })
 
-        app.post('/ideas', async(req, res) =>{
+        app.post('/ideas', varifyToken, async (req, res) => {
             const newIdea = {
                 ...req.body,
                 createdAt: new Date()
@@ -59,7 +82,7 @@ const run = async () => {
             res.send(result);
         })
 
-        app.patch('/ideas/:ideaId', async(req, res)=>{
+        app.patch('/ideas/:ideaId', varifyToken, async (req, res) => {
             const ideaId = await req.params.ideaId;
             const filter = {
                 _id: new ObjectId(ideaId)
@@ -71,26 +94,26 @@ const run = async () => {
             res.send(result);
         })
 
-        app.delete('/ideas/:ideaId', async(req, res)=>{
+        app.delete('/ideas/:ideaId', varifyToken, async (req, res) => {
             const id = req.params.ideaId;
-            const result = await ideasCollection.deleteOne({_id: new ObjectId(id)});
+            const result = await ideasCollection.deleteOne({ _id: new ObjectId(id) });
             res.send(result);
         })
 
         // comments
-        app.get("/comments/:ideaId", async(req, res)=>{
+        app.get("/comments/idea/:ideaId",varifyToken, async (req, res) => {
             const id = req.params.ideaId;
-            const result = await commentCollection.find({ideaId:id}).toArray();
+            const result = await commentCollection.find({ ideaId: id }).toArray();
             res.send(result);
         });
 
-        app.get("/comments/:userId", async(req, res)=>{
+        app.get("/comments/user/:userId", varifyToken, async (req, res) => {
             const userId = req.params.userId;
-            const result =await commentCollection({userId}).toArray();
+            const result = await commentCollection.find({ userId }).toArray();
             res.send(result);
         })
 
-        app.post('/comments', async(req, res)=>{
+        app.post('/comments', varifyToken, async (req, res) => {
             const newComment = {
                 ...req.body,
                 createdAt: new Date(),
@@ -99,7 +122,7 @@ const run = async () => {
             res.send(result);
         });
 
-        app.patch('/comments/:id', async(req, res)=>{
+        app.patch('/comments/:id', varifyToken, async (req, res) => {
             const id = req.params.id;
 
             const filter = {
@@ -112,9 +135,9 @@ const run = async () => {
             res.send(result);
         });
 
-        app.delete('/comments/:id', async(req, res)=>{
+        app.delete('/comments/:id', varifyToken, async (req, res) => {
             const id = req.params.id;
-            const result = await commentCollection.deleteOne({_id: new ObjectId(id)});
+            const result = await commentCollection.deleteOne({ _id: new ObjectId(id) });
             res.send(result);
         })
 
