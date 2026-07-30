@@ -23,7 +23,7 @@ const client = new MongoClient(uri, {
 });
 
 const JWKS = createRemoteJWKSet(
-    new URL('http://localhost:3000/api/auth/jwks')
+    new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
 )
 
 const varifyToken = async (req, res, next) => {
@@ -49,7 +49,7 @@ const varifyToken = async (req, res, next) => {
 
 const run = async () => {
     try {
-        await client.connect();
+        // await client.connect();
 
         const db = client.db('SparkNest');
         const ideasCollection = db.collection('ideas');
@@ -57,7 +57,31 @@ const run = async () => {
 
         // ideas
         app.get('/ideas', async (req, res) => {
-            const result = await ideasCollection.find().toArray();
+            const { search, category, sort= 'new' } = req.query;
+
+            const query = {};
+
+            if (search) {
+                query.ideaTitle = {
+                    $regex: search,
+                    $options: 'i'
+                }
+            }
+            if (category) {
+                query.category = category;
+            }
+
+            let cursor = ideasCollection.find(query);
+
+            if (sort === "new") {
+                cursor = cursor.sort({ createdAt: -1 });
+            }
+            if (sort === "old") {
+                cursor = cursor.sort({ createdAt: 1 });
+            }
+
+            const result = await cursor.toArray();
+            console.log(result);
             res.send(result);
         })
 
@@ -101,7 +125,7 @@ const run = async () => {
         })
 
         // comments
-        app.get("/comments/idea/:ideaId",varifyToken, async (req, res) => {
+        app.get("/comments/idea/:ideaId", varifyToken, async (req, res) => {
             const id = req.params.ideaId;
             const result = await commentCollection.find({ ideaId: id }).toArray();
             res.send(result);
@@ -142,7 +166,7 @@ const run = async () => {
         })
 
 
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     }
     finally {
