@@ -97,6 +97,11 @@ const run = async () => {
             res.send(result);
         })
 
+        app.get('/trendingIdeas', async(req, res)=>{
+            const result = await ideasCollection.find().limit(2).toArray();
+            res.send(result);
+        })
+
         app.post('/ideas', varifyToken, async (req, res) => {
             const newIdea = {
                 ...req.body,
