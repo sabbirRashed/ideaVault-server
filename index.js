@@ -98,7 +98,7 @@ const run = async () => {
         })
 
         app.get('/trendingIdeas', async(req, res)=>{
-            const result = await ideasCollection.find().limit(2).toArray();
+            const result = await ideasCollection.find().limit(6).toArray();
             res.send(result);
         })
 
